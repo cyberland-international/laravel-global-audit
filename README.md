@@ -59,12 +59,12 @@ Open `config/global-audit.php` to adjust:
 
 Once installed, the package listens globally to Eloquent model events and records audit logs whenever a model is created, updated or deleted (according to your config).
 
-You can query the audit logs via the `AuditLog` model:
+You can query the audit logs via the `GlobalAuditLog` model:
 
 ```php
-use Cyberland\GlobalAudit\Models\AuditLog;
+use Cyberland\GlobalAudit\Models\GlobalAuditLog;
 
-$logs = AuditLog::latest()->take(50)->get();
+$logs = GlobalAuditLog::latest()->take(50)->get();
 ```
 
 Each log entry typically contains:
@@ -88,12 +88,75 @@ Each log entry typically contains:
 You can filter logs by model, user, or event, for example:
 
 ```php
-$logs = AuditLog::where('model_type', App\Models\User::class)
+use Cyberland\GlobalAudit\Models\GlobalAuditLog;
+use App\Models\User;
+
+$logs = GlobalAuditLog::where('model_type', User::class)
     ->where('event', 'updated')
     ->get();
 ```
 
-Feel free to add your own scopes on the `AuditLog` model to encapsulate common queries.
+Feel free to add your own scopes on the `GlobalAuditLog` model to encapsulate common queries.
+
+---
+
+## Manual logging (facade)
+
+In addition to model lifecycle events, you can manually create audit logs for actions that do not involve Eloquent models (e.g. logins, logouts, custom API calls).
+
+First, (optionally) register the facade alias in your application's `config/app.php`:
+
+```php
+'aliases' => [
+    // ...
+    'GlobalAudit' => Cyberland\\GlobalAudit\\Facades\\GlobalAudit::class,
+],
+```
+
+Then you can log events anywhere in your application, for example in an auth controller:
+
+```php
+use GlobalAudit; // if alias is registered
+use Illuminate\Http\Request;
+
+class AuthController extends Controller
+{
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (! auth()->attempt($credentials)) {
+            GlobalAudit::log(__METHOD__, [
+                'status' => 'failed',
+                'email' => $request->input('email'),
+                'guard' => 'web',
+            ]);
+
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $user = auth()->user();
+
+        GlobalAudit::log(__METHOD__, [
+            'status' => 'success',
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
+
+        return response()->json(['message' => 'Logged in']);
+    }
+}
+```
+
+The `log` method signature is:
+
+```php
+GlobalAudit::log(string $event, array $changes = [], ?\Illuminate\Contracts\Auth\Authenticatable $user = null): GlobalAuditLog
+```
+
+- `$event` is a short descriptor of what happened (e.g. `__METHOD__`, `'login'`, `'logout'`, `'api_call'`).
+- `$changes` is any contextual data you want to store (sensitive keys listed in `global-audit.hidden` will be removed).
+- `$user` is optional; when omitted, the current authenticated user (if any) is used.
 
 ---
 

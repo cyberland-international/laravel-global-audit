@@ -2,6 +2,7 @@
 namespace Cyberland\GlobalAudit;
 
 use Cyberland\GlobalAudit\Observers\GlobalAuditObserver;
+use Cyberland\GlobalAudit\Services\GlobalAuditService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
@@ -34,6 +35,10 @@ class GlobalAuditServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        $this->app->singleton('global-audit', function () {
+            return new GlobalAuditService();
+        });
+
         $this->mergeConfigFrom(
             __DIR__ . '/../config/global-audit.php',
             'global-audit'
