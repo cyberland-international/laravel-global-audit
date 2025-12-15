@@ -46,7 +46,7 @@ class GlobalAuditObserver
         });
     }
 
-    protected function log(string $action, Model $model, array $original = [], array $dirty = []): void
+    protected function log(string $event, Model $model, array $original = [], array $dirty = []): void
     {
         $skipped = config('global-audit.skip_models', []);
         $skipped[] = AuditLog::class;
@@ -59,7 +59,7 @@ class GlobalAuditObserver
 
         $user = Auth::user();
 
-        if ($action === 'update') {
+        if ($event === 'update') {
             $old = Arr::except($original, $this->excludedSensitiveAttributes);
             $new = Arr::except($model->getAttributes(), $this->excludedSensitiveAttributes);
             $dirtyFiltered = Arr::except($dirty, $this->excludedSensitiveAttributes);
@@ -79,7 +79,7 @@ class GlobalAuditObserver
 
         AuditLog::create([
             'user_id' => $user?->id,
-            'action' => $action,
+            'event' => $event,
             'model_type' => $model->getMorphClass(),
             'model_id' => $model->getKey(),
             'changes' => $changes,

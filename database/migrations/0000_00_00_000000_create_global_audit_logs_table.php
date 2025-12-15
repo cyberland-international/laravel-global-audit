@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignUlid('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('http_method')->nullable();
-            $table->string('action')->nullable();
+            $table->string('event')->nullable();
             $table->nullableUlidMorphs('model');
             $table->ipAddress('ip_address')->nullable();
             $table->longText('url')->nullable();
