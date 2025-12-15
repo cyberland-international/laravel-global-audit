@@ -160,6 +160,39 @@ GlobalAudit::log(string $event, array $changes = [], ?\Illuminate\Contracts\Auth
 
 ---
 
+### Middleware-based logging
+
+Instead of calling the facade in every controller method, you can centralize logging in a middleware and store the controller action name in the `event` column.
+
+Example middleware in your application (generated via `php artisan make:middleware GlobalAuditRequest`):
+
+```php
+use Closure;
+use GlobalAudit; // if alias is registered
+use Illuminate\Http\Request;
+
+class GlobalAuditRequest
+{
+    public function handle(Request $request, Closure $next)
+    {
+        $response = $next($request);
+
+        $route = $request->route();
+        $action = $route ? $route->getActionMethod() : null; // e.g. "login"
+
+        GlobalAudit::log($action, [
+            'status' => $response->getStatusCode(),
+        ]);
+
+        return $response;
+    }
+}
+```
+
+Register this middleware in your application's `app/Http/Kernel.php` (either in the `web`/`api` group or as a named middleware applied only to selected routes).
+
+---
+
 ## Testing
 
 Run your test suite (if present) with:

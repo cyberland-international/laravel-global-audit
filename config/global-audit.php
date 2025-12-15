@@ -14,4 +14,17 @@ return [
     'skip_models' => [
         // e.g. App\Models\AuditTrail::class,
     ],
+
+    'middleware' => [
+        'enabled' => false,
+        'only' => [
+            // 'api/*',
+        ],
+        'except' => [
+            'telescope*',
+            'pulse*',
+            'health*',
+            'up*',
+        ],
+    ],
 ];
