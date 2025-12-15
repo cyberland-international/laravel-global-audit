@@ -27,10 +27,11 @@ class GlobalAuditRequestMiddleware
         }
 
         $route = $request->route();
-        $action = $route ? $route->getActionMethod() : null;
+        $action = $route ? $route->getActionName() : null;
 
         GlobalAudit::log($action, [
             'status' => $response->getStatusCode(),
+            ...$route->getAction()
         ]);
 
         return $response;

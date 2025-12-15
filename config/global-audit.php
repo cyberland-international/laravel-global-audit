@@ -12,11 +12,11 @@ return [
     ],
 
     'skip_models' => [
-        // e.g. App\Models\AuditTrail::class,
+        // e.g. \App\Models\AuditTrail::class,
     ],
 
     'middleware' => [
-        'enabled' => false,
+        'enabled' => true,
         'only' => [
             // 'api/*',
         ],
@@ -25,6 +25,7 @@ return [
             'pulse*',
             'health*',
             'up*',
+            'api/me',
         ],
     ],
 ];

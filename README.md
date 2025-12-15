@@ -162,34 +162,108 @@ GlobalAudit::log(string $event, array $changes = [], ?\Illuminate\Contracts\Auth
 
 ### Middleware-based logging
 
-Instead of calling the facade in every controller method, you can centralize logging in a middleware and store the controller action name in the `event` column.
+Instead of calling the facade in every controller method, you can centralize logging using the built-in middleware `Cyberland\GlobalAudit\Http\Middleware\GlobalAuditRequestMiddleware`. It records the controller action name in the `event` column and uses `config('global-audit.middleware')` for basic scoping.
 
-Example middleware in your application (generated via `php artisan make:middleware GlobalAuditRequest`):
+Make sure the middleware alias is registered in your application:
 
 ```php
-use Closure;
-use GlobalAudit; // if alias is registered
-use Illuminate\Http\Request;
+// app/Http/Kernel.php
 
-class GlobalAuditRequest
+protected $routeMiddleware = [
+    // ...
+    'global.audit' => \Cyberland\GlobalAudit\Http\Middleware\GlobalAuditRequestMiddleware::class,
+];
+```
+
+Then you can enable and scope it via your published `config/global-audit.php`:
+
+```php
+// config/global-audit.php
+
+'middleware' => [
+    'enabled' => true,
+    'only' => [
+        'api/*',
+    ],
+    'except' => [
+        'telescope*',
+        'pulse*',
+    ],
+],
+```
+
+#### Route-level usage
+
+Apply the middleware directly on routes or route groups:
+
+```php
+use App\Http\Controllers\AuthController;
+
+Route::middleware('global.audit')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
+```
+
+#### RouteServiceProvider (Laravel 10-style)
+
+If you organize routes in your `RouteServiceProvider`, you can attach the middleware at that level:
+
+```php
+// app/Providers/RouteServiceProvider.php
+
+use Illuminate\Support\Facades\Route;
+
+public function boot(): void
 {
-    public function handle(Request $request, Closure $next)
-    {
-        $response = $next($request);
-
-        $route = $request->route();
-        $action = $route ? $route->getActionMethod() : null; // e.g. "login"
-
-        GlobalAudit::log($action, [
-            'status' => $response->getStatusCode(),
-        ]);
-
-        return $response;
-    }
+    $this->routes(function () {
+        Route::middleware(['api', 'global.audit'])
+            ->prefix('api')
+            ->group(base_path('routes/api.php'));
+    });
 }
 ```
 
-Register this middleware in your application's `app/Http/Kernel.php` (either in the `web`/`api` group or as a named middleware applied only to selected routes).
+#### Laravel 11+ bootstrap/app middleware
+
+In Laravel 11+, if you're using the `bootstrap/app.php` style, you can register the middleware there when configuring the HTTP kernel:
+
+```php
+// bootstrap/app.php
+
+use Cyberland\GlobalAudit\Http\Middleware\GlobalAuditRequestMiddleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        // ...
+    )
+    ->withMiddleware(function (Illuminate\Foundation\Http\Kernel $kernel) {
+        $kernel->aliasMiddleware('global.audit', GlobalAuditRequestMiddleware::class);
+    })
+    ->create();
+```
+
+After that, use `'global.audit'` on your routes as shown above.
+
+#### Controller constructor
+
+You can also attach the middleware at the controller level so all actions on that controller are audited:
+
+```php
+use Illuminate\Routing\Controller;
+
+class AuthController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('global.audit');
+    }
+
+    // all methods here will pass through GlobalAuditRequestMiddleware
+}
+```
 
 ---
 
