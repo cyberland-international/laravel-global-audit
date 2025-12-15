@@ -21,7 +21,7 @@ If you prefer to register it manually, add this to `config/app.php`:
 ```php
 'providers' => [
     // ...
-    Cyberland\LaravelGlobalAudit\GlobalAuditServiceProvider::class,
+    Cyberland\GlobalAudit\GlobalAuditServiceProvider::class,
 ],
 ```
 
@@ -62,7 +62,7 @@ Once installed, the package listens globally to Eloquent model events and record
 You can query the audit logs via the `AuditLog` model:
 
 ```php
-use Cyberland\LaravelGlobalAudit\Models\AuditLog;
+use Cyberland\GlobalAudit\Models\AuditLog;
 
 $logs = AuditLog::latest()->take(50)->get();
 ```
