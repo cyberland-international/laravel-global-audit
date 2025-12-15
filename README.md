@@ -32,7 +32,8 @@ If you prefer to register it manually, add this to `config/app.php`:
 Publish the config and migration files:
 
 ```bash
-php artisan vendor:publish --provider="Cyberland\\LaravelGlobalAudit\\GlobalAuditServiceProvider"
+php artisan vendor:publish --provider="Cyberland\GlobalAudit\GlobalAuditServiceProvider" --tag=config
+php artisan vendor:publish --provider="Cyberland\GlobalAudit\GlobalAuditServiceProvider" --tag=migrations
 ```
 
 This will publish:
