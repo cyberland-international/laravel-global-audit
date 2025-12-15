@@ -1,7 +1,7 @@
 <?php
 namespace Cyberland\GlobalAudit\Observers;
-
-use Cyberland\GlobalAudit\Models\AuditLog;
+ 
+use Cyberland\GlobalAudit\Models\GlobalAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -49,7 +49,7 @@ class GlobalAuditObserver
     protected function log(string $event, Model $model, array $original = [], array $dirty = []): void
     {
         $skipped = config('global-audit.skip_models', []);
-        $skipped[] = AuditLog::class;
+        $skipped[] = GlobalAuditLog::class;
 
         foreach ($skipped as $skip) {
             if ($model instanceof $skip) {
@@ -77,7 +77,7 @@ class GlobalAuditObserver
             $changes = Arr::except($model->getAttributes(), $this->excludedSensitiveAttributes);
         }
 
-        AuditLog::create([
+        GlobalAuditLog::create([
             'user_id' => $user?->id,
             'event' => $event,
             'model_type' => $model->getMorphClass(),

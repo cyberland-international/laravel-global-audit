@@ -3,7 +3,7 @@ namespace Cyberland\GlobalAudit\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AuditLog extends Model
+class GlobalAuditLog extends Model
 {
     protected $table = 'global_audit_logs';
 
